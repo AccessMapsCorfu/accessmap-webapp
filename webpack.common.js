@@ -5,21 +5,13 @@ const SpriteLoaderPlugin = require("svg-sprite-loader/plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
-  entry: "./src/index.js",
+  entry: "./src/index.tsx",
   output: {
     path: path.resolve(__dirname, "public"),
-    filename: "index.bundle.js"
+    filename: "index.bundle.js",
+    assetModuleFilename: "assets/[hash][ext][query]",
   },
-  plugins: [
-    new MiniCssExtractPlugin(),
-    new SpriteLoaderPlugin(),
-    new HtmlWebpackPlugin({
-      title: "AccessMap",
-      filename: "index.html",
-      template: "src/index.dev.html",
-      inject: false
-    })
-  ],
+  plugins: [new MiniCssExtractPlugin(), new SpriteLoaderPlugin()],
   module: {
     rules: [
       {
@@ -27,12 +19,12 @@ module.exports = {
         // Re-enable node_modules exclusion once react-mapbox-gl stops 'require'ing
         // a css module
         // exclude: /node_modules/,
-        use: [
-          // "style-loader",
-          MiniCssExtractPlugin.loader,
-          "css-loader",
-          "postcss-loader"
-        ]
+        use: [MiniCssExtractPlugin.loader, "css-loader", "postcss-loader"],
+      },
+      {
+        test: /\.(ts|tsx)$/,
+        use: "ts-loader",
+        exclude: /node_modules/,
       },
       {
         test: /\.(js|jsx)$/,
@@ -40,39 +32,41 @@ module.exports = {
         use: {
           loader: "babel-loader",
           options: {
-            babelrc: true
-          }
-        }
+            babelrc: true,
+          },
+        },
       },
       {
         test: /\.scss$/,
-        loaders: [
+        use: [
           MiniCssExtractPlugin.loader,
-          // "style-loader",
           "css-loader",
           "postcss-loader",
-          "sass-loader"
-        ]
+          "sass-loader",
+        ],
       },
       {
         test: /\.(woff|woff2|eot|ttf)$/,
-        loader: "file-loader?name=src/fonts/roboto/[name].[ext]"
+        type: "asset/resource",
       },
       {
         test: /\.(png|jpg|gif)$/,
-        use: {
-          loader: "url-loader",
-          options: { limit: 8192 }
-        }
+        type: "asset/resource",
       },
       {
         test: /\.svg$/,
+        issuer: /\.(ts)x?$/,
         loader: "svg-sprite-loader",
         options: {
-          extract: true
-        }
-      }
-    ]
+          extract: true,
+        },
+      },
+      {
+        test: /\.svg$/,
+        issuer: /\.scss$/,
+        loader: "svg-url-loader",
+      },
+    ],
   },
   resolve: {
     extensions: [
@@ -80,15 +74,15 @@ module.exports = {
       ".web-loader.js",
       ".loader.js",
       ".js",
-      ".jsx"
+      ".jsx",
+      ".ts",
+      ".tsx",
     ],
-    modules: [
-      path.resolve("./src"),
-      "node_modules",
-      path.resolve(__dirname, "node_modules")
-    ],
+    modules: [path.resolve("./src"), "node_modules"],
     alias: {
-      "rakam-js$": "rakam-js/rakam.js"
-    }
-  }
+      "rakam-js$": "rakam-js/rakam.js",
+      "mapbox-gl": "maplibre-gl",
+      "@types/mapbox-gl": "@types/maplibre-gl",
+    },
+  },
 };
